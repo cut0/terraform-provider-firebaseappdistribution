@@ -1,0 +1,15 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - copyloopvar
+    - misspell
+    - predeclared
+    - unconvert
+    - unparam
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
