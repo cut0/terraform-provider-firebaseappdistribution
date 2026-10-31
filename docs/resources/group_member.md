@@ -51,7 +51,7 @@ resource "firebaseappdistribution_group_member" "qa" {
 
 ### Read-Only
 
-- `id` (String) Synthetic ID in the form `projects/{project}/groups/{group_id}/testers/{email}`.
+- `id` (String) Synthetic ID in the form `projects/{project_number}/groups/{group_id}/testers/{email}`, using the project number and the email as registered in the project.
 - `tester_display_name` (String) Display name of the tester as registered in the project.
 - `tester_name` (String) Resource name of the tester, in the form `projects/{project_number}/testers/{email}`.
 

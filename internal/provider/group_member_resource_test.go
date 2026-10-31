@@ -26,6 +26,8 @@ func TestAccGroupMemberResource(t *testing.T) {
 		email = acctest.RandomWithPrefix("tf-acc") + "@example.com"
 	}
 
+	idRegexp := regexp.MustCompile(`^projects/[0-9]+/groups/` + regexp.QuoteMeta(groupID) + `/testers/` + regexp.QuoteMeta(email) + `$`)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
@@ -34,7 +36,7 @@ func TestAccGroupMemberResource(t *testing.T) {
 			{
 				Config: testAccGroupMemberResourceConfig(groupID, email),
 				ConfigStateChecks: []statecheck.StateCheck{
-					statecheck.ExpectKnownValue(address, tfjsonpath.New("id"), knownvalue.StringExact(groupMemberID(testAccProject(), groupID, email))),
+					statecheck.ExpectKnownValue(address, tfjsonpath.New("id"), knownvalue.StringRegexp(idRegexp)),
 					statecheck.ExpectKnownValue(address, tfjsonpath.New("project"), knownvalue.StringExact(testAccProject())),
 					statecheck.ExpectKnownValue(address, tfjsonpath.New("group_id"), knownvalue.StringExact(groupID)),
 					statecheck.ExpectKnownValue(address, tfjsonpath.New("email"), knownvalue.StringExact(email)),
@@ -47,6 +49,10 @@ func TestAccGroupMemberResource(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"create_missing_tester"},
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					attributes := s.RootModule().Resources[address].Primary.Attributes
+					return groupMemberID(attributes["project"], attributes["group_id"], attributes["email"]), nil
+				},
 			},
 		},
 	})

@@ -65,8 +65,9 @@ func (r *groupMemberResource) Schema(_ context.Context, _ resource.SchemaRequest
 			"Use one resource per tester, typically with `for_each` over a set of email addresses.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Synthetic ID in the form `projects/{project}/groups/{group_id}/testers/{email}`.",
-				Computed:            true,
+				MarkdownDescription: "Synthetic ID in the form `projects/{project_number}/groups/{group_id}/testers/{email}`, " +
+					"using the project number and the email as registered in the project.",
+				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -192,7 +193,7 @@ func (r *groupMemberResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	plan.Project = types.StringValue(project)
-	plan.fromAPI(project, tester)
+	plan.fromAPI(projectNumber, tester)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -205,8 +206,7 @@ func (r *groupMemberResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	project := state.Project.ValueString()
-	projectNumber, err := r.client.projectNumber(ctx, project)
+	projectNumber, err := r.client.projectNumber(ctx, state.Project.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Error resolving project", err.Error())
 		return
@@ -222,7 +222,7 @@ func (r *groupMemberResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	state.fromAPI(project, tester)
+	state.fromAPI(projectNumber, tester)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -324,8 +324,8 @@ func (r *groupMemberResource) findMember(ctx context.Context, projectNumber, gro
 	return found, nil
 }
 
-func (m *groupMemberResourceModel) fromAPI(project string, tester *firebaseappdistribution.GoogleFirebaseAppdistroV1Tester) {
-	m.ID = types.StringValue(groupMemberID(project, m.GroupID.ValueString(), m.Email.ValueString()))
+func (m *groupMemberResourceModel) fromAPI(projectNumber string, tester *firebaseappdistribution.GoogleFirebaseAppdistroV1Tester) {
+	m.ID = types.StringValue(groupMemberID(projectNumber, m.GroupID.ValueString(), testerEmail(tester.Name)))
 	m.TesterName = types.StringValue(tester.Name)
 	m.TesterDisplayName = types.StringValue(tester.DisplayName)
 }
