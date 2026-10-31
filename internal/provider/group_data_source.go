@@ -3,10 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -55,6 +58,10 @@ func (d *groupDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 			"group_id": schema.StringAttribute{
 				MarkdownDescription: "Alias of the group.",
 				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+					stringvalidator.RegexMatches(regexp.MustCompile(`^[^/]+$`), "must not contain '/'"),
+				},
 			},
 			"display_name": schema.StringAttribute{
 				MarkdownDescription: "Human readable name shown in the Firebase console.",
